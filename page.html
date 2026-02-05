@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Will You Be My Valentine?</title>
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Quicksand:wght@500;700&display=swap');
+
+body {
+    margin: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Quicksand', sans-serif;
+    background: radial-gradient(circle, #fff0f3 0%, #ffcad4 100%);
+}
+
+.cursive { font-family: 'Dancing Script', cursive; }
+
+.card {
+    background: rgba(255,255,255,0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 2rem;
+    box-shadow: 0 25px 60px rgba(255,105,135,0.35);
+    border: 2px solid white;
+    z-index: 10;
+}
+
+/* 🔒 NO POSITION CONTROLLER (viewport-based) */
+.no-wrapper {
+    position: fixed;
+    z-index: 50;
+    transition:
+        left 0.3s cubic-bezier(.34,1.56,.64,1),
+        top 0.3s cubic-bezier(.34,1.56,.64,1);
+}
+
+/* 🎭 Animated button inside */
+.no-btn {
+    cursor: pointer;
+}
+
+@keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+}
+.shake { animation: shake 0.25s; }
+
+.heart-bg {
+    position: absolute;
+    pointer-events: none;
+    animation: fall linear forwards;
+    z-index: 0;
+}
+
+@keyframes fall {
+    to { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+}
+
+.hidden { display: none !important; }
+
+.pulse-soft {
+    animation: pulse-soft 2s infinite;
+}
+@keyframes pulse-soft {
+    0%,100% { transform: scale(var(--yes-scale,1)); }
+    50% { transform: scale(calc(var(--yes-scale,1) * 1.05)); }
+}
+</style>
+</head>
+
+<body class="flex items-center justify-center">
+
+<div id="particles"></div>
+
+<!-- 💡 NO IS OUTSIDE THE CARD -->
+<div id="noWrap" class="no-wrapper">
+    <button id="no"
+        class="no-btn bg-white border-2 border-pink-300 text-pink-500 font-semibold py-3 px-8 rounded-full text-lg shadow-md">
+        No
+    </button>
+</div>
+
+<!-- MAIN CARD -->
+<div id="card" class="card p-10 text-center max-w-md w-full mx-4">
+    <div class="text-7xl mb-4">🥺</div>
+    <h1 class="text-4xl md:text-5xl text-pink-600 cursive mb-10">
+        Will you be my Valentine?
+    </h1>
+
+    <div class="relative flex justify-center min-h-[140px]">
+        <button id="yes"
+            class="bg-pink-500 text-white font-bold py-4 px-12 rounded-full text-2xl shadow-xl pulse-soft">
+            YES!
+        </button>
+    </div>
+</div>
+
+<!-- CELEBRATION -->
+<div id="celebrate" class="hidden card p-12 text-center max-w-lg mx-4">
+    <div class="text-9xl mb-6">🥰</div>
+    <h1 class="text-6xl cursive text-pink-600 mb-4">YAYYYY!</h1>
+    <p class="text-4xl text-pink-500 font-bold">
+        That's my CUTU PATUTU 💖
+    </p>
+</div>
+
+<script>
+const noWrap = document.getElementById("noWrap");
+const noBtn = document.getElementById("no");
+const yesBtn = document.getElementById("yes");
+const card = document.getElementById("card");
+const celebrate = document.getElementById("celebrate");
+const particles = document.getElementById("particles");
+
+let clickCount = 0;
+let yesScale = 1;
+
+const noTexts = [
+    "No",
+    "Are you sure? 🤨",
+    "Wait 😳",
+    "Try again 😂",
+    "Missed 🏹",
+    "Almost!",
+    "BRO 💀",
+    "THIS IS RIGGED",
+    "FINE 😔"
+];
+
+// ❤️ hearts
+function createHeart() {
+    const h = document.createElement("div");
+    h.className = "heart-bg";
+    h.textContent = ["❤️","💖","💗","✨","🏹"][Math.floor(Math.random()*5)];
+    h.style.left = Math.random()*100 + "vw";
+    h.style.top = "-40px";
+    h.style.fontSize = 18 + Math.random()*20 + "px";
+    h.style.animationDuration = 4 + Math.random()*3 + "s";
+    particles.appendChild(h);
+    setTimeout(()=>h.remove(),7000);
+}
+setInterval(createHeart,600);
+
+// ✅ PERFECT INITIAL PLACEMENT
+function placeNoOnYes() {
+    const y = yesBtn.getBoundingClientRect();
+    const n = noWrap.getBoundingClientRect();
+
+    noWrap.style.left = y.left + y.width/2 - n.width/2 + "px";
+    noWrap.style.top  = y.top  + y.height/2 - n.height/2 + "px";
+}
+
+// ✅ SAFE MOVE (viewport math is now correct)
+function moveNo() {
+    clickCount++;
+
+    const rect = noWrap.getBoundingClientRect();
+    const margin = 20;
+
+    const maxX = window.innerWidth - rect.width - margin;
+    const maxY = window.innerHeight - rect.height - margin;
+
+    let x = Math.random()*maxX;
+    let y = Math.random()*maxY;
+
+    x = Math.max(margin, Math.min(x, maxX));
+    y = Math.max(margin, Math.min(y, maxY));
+
+    noWrap.style.left = x + "px";
+    noWrap.style.top  = y + "px";
+
+    noBtn.textContent =
+        noTexts[Math.min(clickCount, noTexts.length - 1)];
+
+    noBtn.classList.add("shake");
+    setTimeout(()=>noBtn.classList.remove("shake"),250);
+
+    yesScale = Math.min(1.5, yesScale + 0.05);
+    document.documentElement.style.setProperty("--yes-scale", yesScale);
+
+    for(let i=0;i<3;i++) createHeart();
+}
+
+// init after layout
+window.addEventListener("load", () => {
+    requestAnimationFrame(placeNoOnYes);
+});
+window.addEventListener("resize", placeNoOnYes);
+
+noBtn.addEventListener("click", e => {
+    e.preventDefault();
+    moveNo();
+});
+noBtn.addEventListener("touchstart", e => {
+    e.preventDefault();
+    moveNo();
+},{passive:false});
+
+yesBtn.addEventListener("click", () => {
+    card.classList.add("hidden");
+    noWrap.classList.add("hidden");
+    celebrate.classList.remove("hidden");
+});
+</script>
+
+</body>
+</html>
